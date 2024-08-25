@@ -1,38 +1,34 @@
+"use client"
+import useSWR from "swr";
 import OrderCard from "@/components/order/OrderCard";
 import Heading from "@/components/ui/Heading";
-import { prisma } from "@/src/lib/prisma";
+import { OrderWithProducts } from "@/src/types";
 
 
 
-async function getPedingOrders() {
-  return await prisma.order.findMany({
-    where:{
-      status: false
-    }, 
-    include:{
-      orderProducts:{
-        include:{
-          product: true
-        } 
-      }
-    }
-  })
-}
+export default  function OrdersPage() {
 
-export default async function OrdersPage() {
+  const url = '/admin/orders/api';
+  const fetcher = ()=> fetch(url).then(res => res.json()).then(data=> data);
 
-  const orders = await getPedingOrders();
+  const { data, error, isLoading } = useSWR<OrderWithProducts[]>(url, fetcher, {
+    // refreshInterval:60000 // checar porque hace muchas peticiones por minuto te va costar dinero
+    revalidateOnFocus: false
+  });
 
-  // console.log(JSON.stringify(orders, null, 2))
-  return (
+  if( isLoading ) return  <p>Cargando...</p>;
+
+  if(data)return (
       <>
         <Heading>
           Administra las ordenese de los usuarios
         </Heading>
 
-        {orders.length?(
+
+
+        {data.length?(
           <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-5 mt-5">
-            {orders.map(order=>(
+            {data.map(order=>(
               <OrderCard
                 key={order.id}
                 order={order}
